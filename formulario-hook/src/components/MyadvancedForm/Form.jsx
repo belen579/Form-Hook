@@ -24,9 +24,8 @@ const Form = () => {
       });
 
       const data = await response.json();
-
-      if (data.mensaje === 'El email ya está registrado') {
-        return 'El email ya está registrado en el sistema';
+      if (response.status === 409) {
+        return data.mensaje;
       }
 
       return true;
@@ -35,6 +34,22 @@ const Form = () => {
       return 'Error al verificar el email';
     }
   };
+
+  // Esta función establece un timeout de 500 milisegundos para verificar el email
+  // Cuando el usuario escribe algo, se reinicia el timeout, de forma que no mandamos
+  // una petición por cada letra que escribe el usuario
+  let validationTimeout;
+  const emailValidation = (email) => {
+    return new Promise((resolve) => {
+        clearTimeout(validationTimeout);
+        validationTimeout = setTimeout(async () => {
+            const result = await checkEmail(email);
+            resolve(result);
+        }, 500);
+        }
+    );
+
+  }
 
   const handleReset = () => {
     reset();
@@ -62,7 +77,7 @@ const Form = () => {
                 }
                 return true;
               },
-              exists: checkEmail,  // Verificación de email
+              exists: emailValidation,  // Verificación de email
             },
           })}
           placeholder="Email"
